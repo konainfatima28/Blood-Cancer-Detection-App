@@ -71,16 +71,16 @@ def add_custom_css():
                 0% { opacity: 0; }
                 100% { opacity: 1; }
             }
-            
-             /* Hide the main header and footer from Streamlit's default theme */
+
+            /* Hide the main header and footer from Streamlit's default theme */
             header[data-testid="stHeader"] {
                 display: none;
             }
             .st-emotion-cache-1dp5vir { /* Or the specific selector for the header container */
                 display: none;
             }
-            
-            /* --- Responsive styles for mobile devices --- */
+
+            /* --- Mobile-specific styles for responsiveness --- */
             @media screen and (max-width: 768px) {
                 .main-header {
                     font-size: 32px !important;
@@ -97,15 +97,11 @@ def add_custom_css():
                 .footer {
                     font-size: 12px;
                 }
+                /* Hide the sidebar on mobile */
+                .css-1d37erx {
+                    display: none;
+                }
             }
-            /* --- Additional mobile fixes for columns --- */
-            [data-testid="stColumn"] {
-                width: 100% !important; /* Force columns to stack on mobile */
-            }
-            [data-testid="stVerticalBlock"] > div > div > div {
-                width: 100% !important;
-            }
-            
         </style>
         """, unsafe_allow_html=True)
 
@@ -135,7 +131,9 @@ def load_model():
 
 model = load_model()
 
-# --- 4. Sidebar for Interactive Elements ---
+# --- 4. Sidebar for Interactive Elements on Desktop, Expander for Mobile ---
+# We'll use a single container for inputs that will act as a sidebar on desktop
+# and an expander on mobile.
 st.sidebar.header("🔬 Input Options")
 st.sidebar.markdown("Choose an image to classify.")
 
@@ -162,8 +160,6 @@ if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.sidebar.image(image, caption="Uploaded Image", use_container_width=True)
 elif sample_image_selection != "--- Select a sample image ---":
-    # --- CORRECTED LINE BELOW ---
-    # We now look for the correct .jpg extension based on your dictionary
     image_filename = sample_images[sample_image_selection].split('/')[-1]
     sample_image_path = os.path.join(os.path.dirname(__file__), "sample_images", image_filename)
     
@@ -218,4 +214,4 @@ else:
 
 # --- 7. Footer ---
 st.markdown("<div class='footer'>Created with ❤️ using Streamlit and TensorFlow</div>", unsafe_allow_html=True)
-            
+                
