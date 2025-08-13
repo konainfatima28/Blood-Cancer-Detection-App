@@ -80,7 +80,32 @@ def add_custom_css():
                 display: none;
             }
             
-            /* ... your existing CSS rules ... */
+            /* --- Responsive styles for mobile devices --- */
+            @media screen and (max-width: 768px) {
+                .main-header {
+                    font-size: 32px !important;
+                }
+                .subheader {
+                    font-size: 16px;
+                }
+                .st-emotion-cache-1dp5vir {
+                    padding: 15px; /* Reduce padding on mobile */
+                }
+                .st-emotion-cache-l99d4s {
+                    font-size: 14px;
+                }
+                .footer {
+                    font-size: 12px;
+                }
+            }
+            /* --- Additional mobile fixes for columns --- */
+            [data-testid="stColumn"] {
+                width: 100% !important; /* Force columns to stack on mobile */
+            }
+            [data-testid="stVerticalBlock"] > div > div > div {
+                width: 100% !important;
+            }
+            
         </style>
         """, unsafe_allow_html=True)
 
@@ -193,3 +218,4 @@ else:
 
 # --- 7. Footer ---
 st.markdown("<div class='footer'>Created with ❤️ using Streamlit and TensorFlow</div>", unsafe_allow_html=True)
+            
