@@ -4,4 +4,4 @@ pillow
 numpy
 pandas
 requests
-python-3.9
+opencv-python
