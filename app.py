@@ -71,7 +71,7 @@ def add_custom_css():
                 0% { opacity: 0; }
                 100% { opacity: 1; }
             }
-            
+
             /* Hide Streamlit's default header and footer */
             header[data-testid="stHeader"], footer[data-testid="stFooter"] {
                 display: none;
@@ -81,10 +81,16 @@ def add_custom_css():
             @media screen and (max-width: 768px) {
                 .main-header { font-size: 32px !important; }
                 .subheader { font-size: 16px; }
-                /* Hide the sidebar completely on mobile */
+                /* Hide the sidebar on mobile */
                 [data-testid="stSidebar"] { display: none; }
-                /* Change layout for mobile if needed, e.g., make columns stack */
+                /* Change layout for mobile */
                 [data-testid="stColumn"] { width: 100% !important; }
+            }
+            
+            /* --- Desktop-specific styles --- */
+            @media screen and (min-width: 769px) {
+                /* Hide the main body expander on desktop */
+                [data-testid="stExpander"] { display: none; }
             }
         </style>
         """, unsafe_allow_html=True)
@@ -124,14 +130,11 @@ sample_images = {
     "Monocyte": "sample_images/monocyte.jpg",
 }
 
-# Use different containers for input and image based on screen size
-is_mobile = st.session_state.get('is_mobile', False)
-
 uploaded_file = None
 sample_image_selection = None
 image_to_show = None
 
-# Desktop layout: all inputs and image in the sidebar
+# Sidebar for desktop
 with st.sidebar:
     st.header("🔬 Input Options")
     st.markdown("Choose an image to classify.")
@@ -153,25 +156,30 @@ with st.sidebar:
             image_to_show = Image.open(sample_image_path)
             st.image(image_to_show, caption=f"Sample: {sample_image_selection}", use_container_width=True)
 
-# Mobile layout: inputs and image in the main body
-if st.get_query_params().get('is_mobile', ['false'])[0] == 'true':
-    st.header("🔬 Input Options")
-    uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+# Expander for mobile
+with st.expander("🔬 Input Options", expanded=True):
+    uploaded_file_expander = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"], key="expander_uploader")
     st.write("---")
-    sample_image_selection = st.selectbox(
+    sample_image_selection_expander = st.selectbox(
         "Or use a sample image", 
-        ["--- Select a sample image ---"] + list(sample_images.keys())
+        ["--- Select a sample image ---"] + list(sample_images.keys()),
+        key="expander_selectbox"
     )
-
-    if uploaded_file is not None:
-        image_to_show = Image.open(uploaded_file)
-        st.image(image_to_show, caption="Uploaded Image", width=250) # Smaller size for mobile
-    elif sample_image_selection != "--- Select a sample image ---":
-        image_filename = sample_images[sample_image_selection].split('/')[-1]
+    
+    if uploaded_file_expander is not None:
+        image_to_show = Image.open(uploaded_file_expander)
+        st.image(image_to_show, caption="Uploaded Image", width=250)
+    elif sample_image_selection_expander != "--- Select a sample image ---":
+        image_filename = sample_images[sample_image_selection_expander].split('/')[-1]
         sample_image_path = os.path.join(os.path.dirname(__file__), "sample_images", image_filename)
         if os.path.exists(sample_image_path):
             image_to_show = Image.open(sample_image_path)
-            st.image(image_to_show, caption=f"Sample: {sample_image_selection}", width=250) # Smaller size for mobile
+            st.image(image_to_show, caption=f"Sample: {sample_image_selection_expander}", width=250)
+
+# The uploaded_file and sample_image_selection variables need to be correctly
+# captured from whichever input source is active.
+uploaded_file = uploaded_file or uploaded_file_expander
+sample_image_selection = sample_image_selection or sample_image_selection_expander
 
 # --- 5. Prediction Logic ---
 def predict(image, model):
@@ -215,8 +223,4 @@ else:
 
 # --- 7. Footer ---
 st.markdown("<div class='footer'>Created with ❤️ using Streamlit and TensorFlow</div>", unsafe_allow_html=True)
-
-# For mobile screen detection, a simple JS snippet is often added.
-# In this case, we rely on CSS to hide the sidebar and a simple conditional in Python.
-# A robust mobile check is more complex. The code above handles both cases explicitly.
                 
