@@ -1,0 +1,6 @@
+streamlit
+tensorflow        # or tensorflow-cpu to avoid GPU wheels if you want smaller / CPU-only
+pillow
+numpy
+pandas
+requests
