@@ -5,7 +5,7 @@ from PIL import Image
 import time
 import os
 
-# --- 1. Custom CSS for an impressive, dynamic look and responsive fix ---
+# --- 1. Custom CSS and screen detection for responsive layout ---
 def add_custom_css():
     st.markdown("""
         <style>
@@ -76,29 +76,11 @@ def add_custom_css():
             header[data-testid="stHeader"], footer[data-testid="stFooter"] {
                 display: none;
             }
-
+            
             /* --- Mobile-specific styles for responsiveness --- */
             @media screen and (max-width: 768px) {
-                .main-header {
-                    font-size: 32px !important;
-                }
-                .subheader {
-                    font-size: 16px;
-                }
-                /* Hide the sidebar on mobile */
-                [data-testid="stSidebar"] {
-                    display: none;
-                }
-                /* Show the expander for inputs on mobile */
-                .st-emotion-cache-1j023w > [data-testid="stExpander"] {
-                    display: block;
-                }
-            }
-            /* Hide the expander on desktop */
-            @media screen and (min-width: 769px) {
-                .st-emotion-cache-1j023w > [data-testid="stExpander"] {
-                    display: none;
-                }
+                .main-header { font-size: 32px !important; }
+                .subheader { font-size: 16px; }
             }
         </style>
         """, unsafe_allow_html=True)
@@ -128,7 +110,7 @@ def load_model():
 
 model = load_model()
 
-# --- 4. Define Input Widgets ---
+# --- 4. Define Input Widgets and Place them Conditionally ---
 sample_images = {
     "Basophil": "sample_images/basophil.jpg",
     "Lymphocyte": "sample_images/lymphocyte.jpg",
@@ -138,33 +120,46 @@ sample_images = {
     "Monocyte": "sample_images/monocyte.jpg",
 }
 
-# Mobile input options in a collapsible expander
-with st.expander("🔬 Input Options"):
-    uploaded_file_expander = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"], key="expander_uploader")
-    st.write("---")
-    sample_image_selection_expander = st.selectbox(
-        "Or use a sample image", 
-        ["--- Select a sample image ---"] + list(sample_images.keys()),
-        key="expander_selectbox"
-    )
+# Use a JavaScript hack to set a session state variable for screen width
+# This is a robust way to know if we are on a mobile-like device
+js_code = """
+<script>
+    window.parent.postMessage({
+        streamlit: {
+            isMobile: window.innerWidth <= 768
+        }
+    }, "*");
+</script>
+"""
+st.markdown(js_code, unsafe_allow_html=True)
 
-# Desktop input options in the sidebar
-with st.sidebar:
-    st.header("🔬 Input Options")
-    st.markdown("Choose an image to classify.")
-    uploaded_file_sidebar = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"], key="sidebar_uploader")
-    st.write("---")
-    sample_image_selection_sidebar = st.selectbox(
-        "Or use a sample image", 
-        ["--- Select a sample image ---"] + list(sample_images.keys()),
-        key="sidebar_selectbox"
-    )
+# Check if the session state has been updated
+if 'is_mobile' not in st.session_state:
+    st.session_state['is_mobile'] = False
+
+# Conditional rendering of input widgets
+if st.session_state['is_mobile']:
+    # Mobile view: all inputs inside an expanded expander
+    with st.expander("🔬 Input Options", expanded=True):
+        uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+        st.write("---")
+        sample_image_selection = st.selectbox(
+            "Or use a sample image", 
+            ["--- Select a sample image ---"] + list(sample_images.keys())
+        )
+else:
+    # Desktop view: all inputs inside the sidebar
+    with st.sidebar:
+        st.header("🔬 Input Options")
+        st.markdown("Choose an image to classify.")
+        uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+        st.write("---")
+        sample_image_selection = st.selectbox(
+            "Or use a sample image", 
+            ["--- Select a sample image ---"] + list(sample_images.keys())
+        )
 
 # --- 5. Image Loading and Prediction Logic ---
-# Use the input from whichever source is active
-uploaded_file = uploaded_file_expander or uploaded_file_sidebar
-sample_image_selection = sample_image_selection_expander or sample_image_selection_sidebar
-
 image = None
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
@@ -220,3 +215,4 @@ else:
 
 # --- 7. Footer ---
 st.markdown("<div class='footer'>Created with ❤️ using Streamlit and TensorFlow</div>", unsafe_allow_html=True)
+        
