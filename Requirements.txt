@@ -1,6 +1,5 @@
-streamlit
-tensorflow        # or tensorflow-cpu to avoid GPU wheels if you want smaller / CPU-only
-pillow
+streamlit==1.37.0
+tensorflow==2.15.0
+keras==2.15.0
 numpy
-pandas
-requests
+pillow
