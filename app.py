@@ -85,14 +85,12 @@ def add_custom_css():
                 [data-testid="stSidebar"] { display: none; }
                 /* Change layout for mobile */
                 [data-testid="stColumn"] { width: 100% !important; }
-                /* Show the input expander on mobile */
-                [data-testid="stExpander"] { display: block !important; }
             }
             
             /* --- Desktop-specific styles --- */
             @media screen and (min-width: 769px) {
-                /* Hide the input expander on desktop */
-                [data-testid="stExpander"] { display: none; }
+                /* Hide the input expander on desktop using a specific class */
+                .input-expander-container { display: none; }
             }
 
             /* --- Custom styling for the new result metrics --- */
@@ -179,7 +177,8 @@ with st.sidebar:
             image_to_show = Image.open(sample_image_path)
             st.image(image_to_show, caption=f"Sample: {sample_image_selection}", use_container_width=True)
 
-# Expander for mobile
+# Expander for mobile, now with a unique CSS class
+st.markdown("<div class='input-expander-container'>", unsafe_allow_html=True)
 with st.expander("🔬 Input Options", expanded=True):
     uploaded_file_expander = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"], key="expander_uploader")
     st.write("---")
@@ -198,6 +197,7 @@ with st.expander("🔬 Input Options", expanded=True):
         if os.path.exists(sample_image_path):
             image_to_show = Image.open(sample_image_path)
             st.image(image_to_show, caption=f"Sample: {sample_image_selection_expander}", width=250)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # The uploaded_file and sample_image_selection variables need to be correctly
 # captured from whichever input source is active.
@@ -256,3 +256,4 @@ else:
 
 # --- 7. Footer ---
 st.markdown("<div class='footer'>Created with ❤️ using Streamlit and TensorFlow</div>", unsafe_allow_html=True)
+        
