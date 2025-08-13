@@ -5,7 +5,7 @@ from PIL import Image
 import time
 import os
 
-# --- 1. Custom CSS for an impressive, dynamic look and mobile fix ---
+# --- 1. Custom CSS for an impressive, dynamic look and responsive fix ---
 def add_custom_css():
     st.markdown("""
         <style>
@@ -85,8 +85,18 @@ def add_custom_css():
                 .subheader {
                     font-size: 16px;
                 }
-                /* Hide the sidebar on mobile using a more reliable selector */
+                /* Hide the sidebar on mobile */
                 [data-testid="stSidebar"] {
+                    display: none;
+                }
+                /* Show the expander for inputs on mobile */
+                .st-emotion-cache-1j023w > [data-testid="stExpander"] {
+                    display: block;
+                }
+            }
+            /* Hide the expander on desktop */
+            @media screen and (min-width: 769px) {
+                .st-emotion-cache-1j023w > [data-testid="stExpander"] {
                     display: none;
                 }
             }
@@ -118,8 +128,7 @@ def load_model():
 
 model = load_model()
 
-# --- 4. Sidebar for Interactive Elements on Desktop, Expander for Mobile ---
-# Updated dictionary with correct file extensions
+# --- 4. Define Input Widgets ---
 sample_images = {
     "Basophil": "sample_images/basophil.jpg",
     "Lymphocyte": "sample_images/lymphocyte.jpg",
@@ -129,30 +138,33 @@ sample_images = {
     "Monocyte": "sample_images/monocyte.jpg",
 }
 
-# Use a check to determine if the device is likely mobile (based on Streamlit's internal layout)
-is_mobile = st.session_state.get('is_mobile', False)
-
-# Create an expander for input options on mobile
-if is_mobile:
-    with st.expander("🔬 Input Options"):
-        uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
-        st.write("---")
-        sample_image_selection = st.selectbox(
-            "Or use a sample image", 
-            ["--- Select a sample image ---"] + list(sample_images.keys())
-        )
-else:
-    # Use the sidebar on desktop
-    st.sidebar.header("🔬 Input Options")
-    st.sidebar.markdown("Choose an image to classify.")
-    uploaded_file = st.sidebar.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
-    st.sidebar.write("---")
-    sample_image_selection = st.sidebar.selectbox(
+# Mobile input options in a collapsible expander
+with st.expander("🔬 Input Options"):
+    uploaded_file_expander = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"], key="expander_uploader")
+    st.write("---")
+    sample_image_selection_expander = st.selectbox(
         "Or use a sample image", 
-        ["--- Select a sample image ---"] + list(sample_images.keys())
+        ["--- Select a sample image ---"] + list(sample_images.keys()),
+        key="expander_selectbox"
+    )
+
+# Desktop input options in the sidebar
+with st.sidebar:
+    st.header("🔬 Input Options")
+    st.markdown("Choose an image to classify.")
+    uploaded_file_sidebar = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"], key="sidebar_uploader")
+    st.write("---")
+    sample_image_selection_sidebar = st.selectbox(
+        "Or use a sample image", 
+        ["--- Select a sample image ---"] + list(sample_images.keys()),
+        key="sidebar_selectbox"
     )
 
 # --- 5. Image Loading and Prediction Logic ---
+# Use the input from whichever source is active
+uploaded_file = uploaded_file_expander or uploaded_file_sidebar
+sample_image_selection = sample_image_selection_expander or sample_image_selection_sidebar
+
 image = None
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
