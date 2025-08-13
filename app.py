@@ -5,7 +5,7 @@ from PIL import Image
 import time
 import os
 
-# --- 1. Custom CSS for an impressive, dynamic look ---
+# --- 1. Custom CSS for an impressive, dynamic look and mobile fix ---
 def add_custom_css():
     st.markdown("""
         <style>
@@ -72,11 +72,8 @@ def add_custom_css():
                 100% { opacity: 1; }
             }
 
-            /* Hide the main header and footer from Streamlit's default theme */
-            header[data-testid="stHeader"] {
-                display: none;
-            }
-            .st-emotion-cache-1dp5vir { /* Or the specific selector for the header container */
+            /* Hide Streamlit's default header and footer */
+            header[data-testid="stHeader"], footer[data-testid="stFooter"] {
                 display: none;
             }
 
@@ -88,17 +85,8 @@ def add_custom_css():
                 .subheader {
                     font-size: 16px;
                 }
-                .st-emotion-cache-1dp5vir {
-                    padding: 15px; /* Reduce padding on mobile */
-                }
-                .st-emotion-cache-l99d4s {
-                    font-size: 14px;
-                }
-                .footer {
-                    font-size: 12px;
-                }
-                /* Hide the sidebar on mobile */
-                .css-1d37erx {
+                /* Hide the sidebar on mobile using a more reliable selector */
+                [data-testid="stSidebar"] {
                     display: none;
                 }
             }
@@ -119,9 +107,8 @@ CLASS_NAMES = ['basophil', 'eosinophil', 'erythroblast', 'ig', 'lymphocyte', 'mo
 @st.cache_resource
 def load_model():
     with st.spinner("⏳ Loading AI Model..."):
-        time.sleep(2) # Simulate network delay
+        time.sleep(2)
         try:
-            # Correctly load the model from the repository's root directory
             model = tf.keras.models.load_model('Final-Model05.keras')
             st.success("✅ Model loaded successfully!")
             return model
@@ -132,11 +119,6 @@ def load_model():
 model = load_model()
 
 # --- 4. Sidebar for Interactive Elements on Desktop, Expander for Mobile ---
-# We'll use a single container for inputs that will act as a sidebar on desktop
-# and an expander on mobile.
-st.sidebar.header("🔬 Input Options")
-st.sidebar.markdown("Choose an image to classify.")
-
 # Updated dictionary with correct file extensions
 sample_images = {
     "Basophil": "sample_images/basophil.jpg",
@@ -147,27 +129,43 @@ sample_images = {
     "Monocyte": "sample_images/monocyte.jpg",
 }
 
-uploaded_file = st.sidebar.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
-st.sidebar.write("---")
-sample_image_selection = st.sidebar.selectbox(
-    "Or use a sample image", 
-    ["--- Select a sample image ---"] + list(sample_images.keys())
-)
+# Use a check to determine if the device is likely mobile (based on Streamlit's internal layout)
+is_mobile = st.session_state.get('is_mobile', False)
+
+# Create an expander for input options on mobile
+if is_mobile:
+    with st.expander("🔬 Input Options"):
+        uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+        st.write("---")
+        sample_image_selection = st.selectbox(
+            "Or use a sample image", 
+            ["--- Select a sample image ---"] + list(sample_images.keys())
+        )
+else:
+    # Use the sidebar on desktop
+    st.sidebar.header("🔬 Input Options")
+    st.sidebar.markdown("Choose an image to classify.")
+    uploaded_file = st.sidebar.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+    st.sidebar.write("---")
+    sample_image_selection = st.sidebar.selectbox(
+        "Or use a sample image", 
+        ["--- Select a sample image ---"] + list(sample_images.keys())
+    )
 
 # --- 5. Image Loading and Prediction Logic ---
 image = None
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
-    st.sidebar.image(image, caption="Uploaded Image", use_container_width=True)
+    st.image(image, caption="Uploaded Image", use_container_width=True)
 elif sample_image_selection != "--- Select a sample image ---":
     image_filename = sample_images[sample_image_selection].split('/')[-1]
     sample_image_path = os.path.join(os.path.dirname(__file__), "sample_images", image_filename)
     
     if os.path.exists(sample_image_path):
         image = Image.open(sample_image_path)
-        st.sidebar.image(image, caption=f"Sample: {sample_image_selection}", use_container_width=True)
+        st.image(image, caption=f"Sample: {sample_image_selection}", use_container_width=True)
     else:
-        st.sidebar.warning(f"Sample image '{image_filename}' not found!")
+        st.warning(f"Sample image '{image_filename}' not found!")
         
 def predict(image, model):
     with st.spinner("🔍 Analyzing image..."):
@@ -188,7 +186,6 @@ if image is not None:
         st.markdown("---")
         st.header("Results")
         
-        # Display the main prediction using a metric
         col_pred, col_conf = st.columns(2)
         with col_pred:
             st.metric(label="Predicted Class", value=f"🔬 {predicted_name.upper()}", delta_color="off")
@@ -197,16 +194,13 @@ if image is not None:
 
         st.markdown("---")
         
-        # Use an expander for detailed probabilities
         with st.expander("📊 View All Class Probabilities"):
             for i, (name, prob) in enumerate(zip(CLASS_NAMES, all_probs)):
                 st.write(f"**{name.capitalize()}**")
-                # Highlight the predicted class with a different color
                 prob_color = "#ff3333" if name == predicted_name else "#888888"
                 st.markdown(f"<div style='color:{prob_color}'>{prob * 100:.2f}%</div>", unsafe_allow_html=True)
                 st.progress(float(prob))
 
-        # A final conclusion
         st.success(f"**Conclusion:** The model is most confident that the cell is a **{predicted_name}**.")
 
 else:
@@ -214,4 +208,3 @@ else:
 
 # --- 7. Footer ---
 st.markdown("<div class='footer'>Created with ❤️ using Streamlit and TensorFlow</div>", unsafe_allow_html=True)
-                
