@@ -85,11 +85,13 @@ def add_custom_css():
                 [data-testid="stSidebar"] { display: none; }
                 /* Change layout for mobile */
                 [data-testid="stColumn"] { width: 100% !important; }
+                /* Show the input expander on mobile */
+                [data-testid="stExpander"] { display: block !important; }
             }
             
             /* --- Desktop-specific styles --- */
             @media screen and (min-width: 769px) {
-                /* Hide the main body expander on desktop */
+                /* Hide the input expander on desktop */
                 [data-testid="stExpander"] { display: none; }
             }
 
