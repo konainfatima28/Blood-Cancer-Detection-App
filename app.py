@@ -112,12 +112,12 @@ model = load_model()
 
 # --- 4. Define Input Widgets and Place them Conditionally ---
 sample_images = {
-    "Basophil": "sample_images/basophil.jpg",
-    "Lymphocyte": "sample_images/lymphocyte.jpg",
-    "IG": "sample_images/ig.jpg",
-    "Eosinophil": "sample_images/eosinophil.jpg",
-    "Erythroblast": "sample_images/erythroblast.jpg",
-    "Monocyte": "sample_images/monocyte.jpg",
+    "TEST IMAGE 01": "sample_images/basophil.jpg",
+    "TEST IMAGE 02": "sample_images/lymphocyte.jpg",
+    "TEST IMAGE 03": "sample_images/ig.jpg",
+    "TEST IMAGE 04": "sample_images/eosinophil.jpg",
+    "TEST IMAGE 05": "sample_images/erythroblast.jpg",
+    "TEST IMAGE 06": "sample_images/monocyte.jpg",
 }
 
 # Use a JavaScript hack to set a session state variable for screen width
