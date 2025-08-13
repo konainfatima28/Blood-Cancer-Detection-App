@@ -92,11 +92,6 @@ st.markdown("<h1 class='main-header'>🧬 Blood Cell Classifier</h1>", unsafe_al
 st.markdown("<p class='subheader'>Harnessing AI to aid in the detection of different blood cell types.</p>", unsafe_allow_html=True)
 
 # --- 3. Model Information and Loading ---
-#MODEL_PATH = r"C:\Users\admin\Btech Sem 6\BloodCancerDetection\Blood Cancer Detection\Detection Model\BCD-Streamlit\Final-Model05.keras"
-# Correct way to load the model from the same directory
-#import tensorflow as tf
-model = tf.keras.models.load_model('Final-Model05.keras')
-
 IMG_SIZE = (224, 224)
 CLASS_NAMES = ['basophil', 'eosinophil', 'erythroblast', 'ig', 'lymphocyte', 'monocyte', 'neutrophil', 'platelet']
 
@@ -105,7 +100,8 @@ def load_model():
     with st.spinner("⏳ Loading AI Model..."):
         time.sleep(2) # Simulate network delay
         try:
-            model = tf.keras.models.load_model(MODEL_PATH)
+            # Correctly load the model from the repository's root directory
+            model = tf.keras.models.load_model('Final-Model05.keras')
             st.success("✅ Model loaded successfully!")
             return model
         except Exception as e:
