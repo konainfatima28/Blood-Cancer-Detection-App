@@ -5,7 +5,7 @@ from PIL import Image
 import time
 import os
 
-# --- 1. Custom CSS and screen detection for responsive layout ---
+# --- 1. Custom CSS and styling for the app ---
 def add_custom_css():
     st.markdown("""
         <style>
@@ -71,16 +71,20 @@ def add_custom_css():
                 0% { opacity: 0; }
                 100% { opacity: 1; }
             }
-
+            
             /* Hide Streamlit's default header and footer */
             header[data-testid="stHeader"], footer[data-testid="stFooter"] {
                 display: none;
             }
-            
-            /* --- Mobile-specific styles for responsiveness --- */
+
+            /* --- Mobile-specific styles --- */
             @media screen and (max-width: 768px) {
                 .main-header { font-size: 32px !important; }
                 .subheader { font-size: 16px; }
+                /* Hide the sidebar completely on mobile */
+                [data-testid="stSidebar"] { display: none; }
+                /* Change layout for mobile if needed, e.g., make columns stack */
+                [data-testid="stColumn"] { width: 100% !important; }
             }
         </style>
         """, unsafe_allow_html=True)
@@ -88,7 +92,7 @@ def add_custom_css():
 # Apply the custom CSS
 add_custom_css()
 
-# --- 2. Main App Content with more impressive layout ---
+# --- 2. Main App Content ---
 st.markdown("<h1 class='main-header'>🧬 Blood Cell Classifier</h1>", unsafe_allow_html=True)
 st.markdown("<p class='subheader'>Harnessing AI to aid in the detection of different blood cell types.</p>", unsafe_allow_html=True)
 
@@ -110,70 +114,66 @@ def load_model():
 
 model = load_model()
 
-# --- 4. Define Input Widgets and Place them Conditionally ---
+# --- 4. Define Input Widgets and Image Previews ---
 sample_images = {
-    "TEST IMAGE 01": "sample_images/basophil.jpg",
-    "TEST IMAGE 02": "sample_images/lymphocyte.jpg",
-    "TEST IMAGE 03": "sample_images/ig.jpg",
-    "TEST IMAGE 04": "sample_images/eosinophil.jpg",
-    "TEST IMAGE 05": "sample_images/erythroblast.jpg",
-    "TEST IMAGE 06": "sample_images/monocyte.jpg",
+    "Basophil": "sample_images/basophil.jpg",
+    "Lymphocyte": "sample_images/lymphocyte.jpg",
+    "IG": "sample_images/ig.jpg",
+    "Eosinophil": "sample_images/eosinophil.jpg",
+    "Erythroblast": "sample_images/erythroblast.jpg",
+    "Monocyte": "sample_images/monocyte.jpg",
 }
 
-# Use a JavaScript hack to set a session state variable for screen width
-# This is a robust way to know if we are on a mobile-like device
-js_code = """
-<script>
-    window.parent.postMessage({
-        streamlit: {
-            isMobile: window.innerWidth <= 768
-        }
-    }, "*");
-</script>
-"""
-st.markdown(js_code, unsafe_allow_html=True)
+# Use different containers for input and image based on screen size
+is_mobile = st.session_state.get('is_mobile', False)
 
-# Check if the session state has been updated
-if 'is_mobile' not in st.session_state:
-    st.session_state['is_mobile'] = False
+uploaded_file = None
+sample_image_selection = None
+image_to_show = None
 
-# Conditional rendering of input widgets
-if st.session_state['is_mobile']:
-    # Mobile view: all inputs inside an expanded expander
-    with st.expander("🔬 Input Options", expanded=True):
-        uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
-        st.write("---")
-        sample_image_selection = st.selectbox(
-            "Or use a sample image", 
-            ["--- Select a sample image ---"] + list(sample_images.keys())
-        )
-else:
-    # Desktop view: all inputs inside the sidebar
-    with st.sidebar:
-        st.header("🔬 Input Options")
-        st.markdown("Choose an image to classify.")
-        uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
-        st.write("---")
-        sample_image_selection = st.selectbox(
-            "Or use a sample image", 
-            ["--- Select a sample image ---"] + list(sample_images.keys())
-        )
-
-# --- 5. Image Loading and Prediction Logic ---
-image = None
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
-elif sample_image_selection != "--- Select a sample image ---":
-    image_filename = sample_images[sample_image_selection].split('/')[-1]
-    sample_image_path = os.path.join(os.path.dirname(__file__), "sample_images", image_filename)
+# Desktop layout: all inputs and image in the sidebar
+with st.sidebar:
+    st.header("🔬 Input Options")
+    st.markdown("Choose an image to classify.")
     
-    if os.path.exists(sample_image_path):
-        image = Image.open(sample_image_path)
-        st.image(image, caption=f"Sample: {sample_image_selection}", use_container_width=True)
-    else:
-        st.warning(f"Sample image '{image_filename}' not found!")
-        
+    uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+    st.write("---")
+    sample_image_selection = st.selectbox(
+        "Or use a sample image", 
+        ["--- Select a sample image ---"] + list(sample_images.keys())
+    )
+    
+    if uploaded_file is not None:
+        image_to_show = Image.open(uploaded_file)
+        st.image(image_to_show, caption="Uploaded Image", use_container_width=True)
+    elif sample_image_selection != "--- Select a sample image ---":
+        image_filename = sample_images[sample_image_selection].split('/')[-1]
+        sample_image_path = os.path.join(os.path.dirname(__file__), "sample_images", image_filename)
+        if os.path.exists(sample_image_path):
+            image_to_show = Image.open(sample_image_path)
+            st.image(image_to_show, caption=f"Sample: {sample_image_selection}", use_container_width=True)
+
+# Mobile layout: inputs and image in the main body
+if st.get_query_params().get('is_mobile', ['false'])[0] == 'true':
+    st.header("🔬 Input Options")
+    uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+    st.write("---")
+    sample_image_selection = st.selectbox(
+        "Or use a sample image", 
+        ["--- Select a sample image ---"] + list(sample_images.keys())
+    )
+
+    if uploaded_file is not None:
+        image_to_show = Image.open(uploaded_file)
+        st.image(image_to_show, caption="Uploaded Image", width=250) # Smaller size for mobile
+    elif sample_image_selection != "--- Select a sample image ---":
+        image_filename = sample_images[sample_image_selection].split('/')[-1]
+        sample_image_path = os.path.join(os.path.dirname(__file__), "sample_images", image_filename)
+        if os.path.exists(sample_image_path):
+            image_to_show = Image.open(sample_image_path)
+            st.image(image_to_show, caption=f"Sample: {sample_image_selection}", width=250) # Smaller size for mobile
+
+# --- 5. Prediction Logic ---
 def predict(image, model):
     with st.spinner("🔍 Analyzing image..."):
         img = image.resize(IMG_SIZE)
@@ -186,9 +186,9 @@ def predict(image, model):
         return predicted_class_name, confidence, predictions[0]
 
 # --- 6. Main Display of Impressive Results ---
-if image is not None:
+if image_to_show is not None:
     if model:
-        predicted_name, confidence, all_probs = predict(image, model)
+        predicted_name, confidence, all_probs = predict(image_to_show, model)
 
         st.markdown("---")
         st.header("Results")
@@ -215,4 +215,8 @@ else:
 
 # --- 7. Footer ---
 st.markdown("<div class='footer'>Created with ❤️ using Streamlit and TensorFlow</div>", unsafe_allow_html=True)
-        
+
+# For mobile screen detection, a simple JS snippet is often added.
+# In this case, we rely on CSS to hide the sidebar and a simple conditional in Python.
+# A robust mobile check is more complex. The code above handles both cases explicitly.
+                
