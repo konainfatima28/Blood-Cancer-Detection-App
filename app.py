@@ -92,6 +92,27 @@ def add_custom_css():
                 /* Hide the main body expander on desktop */
                 [data-testid="stExpander"] { display: none; }
             }
+
+            /* --- Custom styling for the new result metrics --- */
+            .metric-card {
+                background-color: rgba(255, 255, 255, 0.05);
+                border: 2px solid #ff3333;
+                border-radius: 10px;
+                padding: 15px;
+                text-align: center;
+                margin-bottom: 20px;
+                box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            }
+            .metric-label {
+                font-size: 16px;
+                color: #ffcccc;
+                font-weight: bold;
+            }
+            .metric-value {
+                font-size: 24px;
+                color: #ffffff;
+                font-weight: bold;
+            }
         </style>
         """, unsafe_allow_html=True)
 
@@ -203,9 +224,19 @@ if image_to_show is not None:
         
         col_pred, col_conf = st.columns(2)
         with col_pred:
-            st.metric(label="Predicted Class", value=f"🔬 {predicted_name.upper()}", delta_color="off")
+            st.markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">Predicted Class</div>
+                    <div class="metric-value">🔬 {predicted_name.upper()}</div>
+                </div>
+            """, unsafe_allow_html=True)
         with col_conf:
-            st.metric(label="Confidence", value=f"{confidence:.2f}%", delta_color="off")
+            st.markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">Confidence</div>
+                    <div class="metric-value">{confidence:.2f}%</div>
+                </div>
+            """, unsafe_allow_html=True)
 
         st.markdown("---")
         
@@ -223,4 +254,3 @@ else:
 
 # --- 7. Footer ---
 st.markdown("<div class='footer'>Created with ❤️ using Streamlit and TensorFlow</div>", unsafe_allow_html=True)
-                
